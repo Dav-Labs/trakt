@@ -36,7 +36,7 @@ export default async function DashboardPage() {
   // Get total locations count
   const { count: totalLocations } = await supabase
     .from('locations')
-    .select('*', { count: 'only', head: true })
+    .select('*', { count: 'exact', head: true })
 
   // Get unique categories checked in
   const uniqueCategoriesCheckedIn = new Set(

@@ -52,7 +52,7 @@ export default async function ProfilePage() {
     (categories || []).map(async (category) => {
       const { count: totalInCategory } = await supabase
         .from('locations')
-        .select('*', { count: 'only', head: true })
+        .select('*', { count: 'exact', head: true })
         .eq('category_id', category.id)
 
       const checkedInCategory = checkIns?.filter(
