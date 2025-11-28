@@ -83,7 +83,7 @@ export default async function DashboardPage() {
           </Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {categories?.map(category => {
+          {categories?.map((category: any) => {
             const categoryCheckIns = checkIns?.filter(
               (ci: any) => ci.location?.category_id === category.id
             ).length || 0
