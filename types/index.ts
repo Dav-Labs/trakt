@@ -20,7 +20,9 @@ export type LocationWithCategory = Location & {
 }
 
 export type CheckInWithLocation = CheckIn & {
-  location: LocationWithCategory | null
+  location: (Location & {
+    category: Category | null
+  }) | null
 }
 
 export type LocationWithCategoryAndCheckIns = Location & {

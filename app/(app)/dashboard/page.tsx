@@ -15,7 +15,7 @@ export default async function DashboardPage() {
   }
 
   // Fetch user's check-ins
-  const { data: checkIns } = await supabase
+  const checkInsQuery = await supabase
     .from('check_ins')
     .select(`
       *,
@@ -27,25 +27,23 @@ export default async function DashboardPage() {
     .eq('user_id', user.id)
     .order('checked_at', { ascending: false })
     .limit(10)
+  const checkIns = checkInsQuery.data as CheckInWithLocation[] | null
 
   // Fetch categories with user's check-in counts
-  const { data: categories } = await supabase
+  const categoriesQuery = await supabase
     .from('categories')
     .select('*')
     .order('name')
+  const categories = categoriesQuery.data as Category[] | null
 
   // Get total locations count
   const { count: totalLocations } = await supabase
     .from('locations')
     .select('*', { count: 'exact', head: true })
 
-  // Cast to proper types
-  const typedCheckIns = checkIns as CheckInWithLocation[] | null
-  const typedCategories = categories as Category[] | null
-
   // Get unique categories checked in
   const uniqueCategoriesCheckedIn = new Set(
-    typedCheckIns?.map(ci => ci.location?.category_id).filter(Boolean) || []
+    checkIns?.map(ci => ci.location?.category_id).filter(Boolean) || []
   )
 
   return (
@@ -62,7 +60,7 @@ export default async function DashboardPage() {
         <StatsCard
           icon="✅"
           label="Total Check-ins"
-          value={typedCheckIns?.length || 0}
+          value={checkIns?.length || 0}
         />
         <StatsCard
           icon="🏆"
@@ -88,8 +86,8 @@ export default async function DashboardPage() {
           </Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {typedCategories?.map(category => {
-            const categoryCheckIns = typedCheckIns?.filter(
+          {categories?.map(category => {
+            const categoryCheckIns = checkIns?.filter(
               ci => ci.location?.category_id === category.id
             ).length || 0
 
@@ -107,12 +105,10 @@ export default async function DashboardPage() {
       {/* Recent Check-ins */}
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Recent Check-ins</h2>
-        {typedCheckIns && typedCheckIns.length > 0 ? (
+        {checkIns && checkIns.length > 0 ? (
           <div className="space-y-4">
-            {typedCheckIns
-              .filter(checkIn => checkIn.location !== null)
-              .map(checkIn => (
-              <CheckInItem key={checkIn.id} checkIn={checkIn as any} />
+            {checkIns.map(checkIn => (
+              <CheckInItem key={checkIn.id} checkIn={checkIn} />
             ))}
           </div>
         ) : (

@@ -13,14 +13,15 @@ export default async function ProfilePage() {
   }
 
   // Fetch user profile
-  const { data: profile } = await supabase
+  const profileQuery = await supabase
     .from('users')
     .select('*')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
+  const profile = profileQuery.data as User | null
 
   // Fetch all check-ins with location details
-  const { data: checkIns } = await supabase
+  const checkInsQuery = await supabase
     .from('check_ins')
     .select(`
       *,
@@ -31,37 +32,34 @@ export default async function ProfilePage() {
     `)
     .eq('user_id', user.id)
     .order('checked_at', { ascending: false })
+  const checkIns = checkInsQuery.data as CheckInWithLocation[] | null
 
   // Fetch categories
-  const { data: categories } = await supabase
+  const categoriesQuery = await supabase
     .from('categories')
     .select('*')
-
-  // Cast to proper types
-  const typedProfile = profile as User | null
-  const typedCheckIns = checkIns as CheckInWithLocation[] | null
-  const typedCategories = categories as Category[] | null
+  const categories = categoriesQuery.data as Category[] | null
 
   // Calculate stats
-  const totalCheckIns = typedCheckIns?.length || 0
+  const totalCheckIns = checkIns?.length || 0
   const uniqueCategoriesCheckedIn = new Set(
-    typedCheckIns?.map(ci => ci.location?.category_id).filter(Boolean) || []
+    checkIns?.map(ci => ci.location?.category_id).filter(Boolean) || []
   )
   
   // Get states visited
   const statesVisited = new Set(
-    typedCheckIns?.map(ci => ci.location?.state).filter(Boolean) || []
+    checkIns?.map(ci => ci.location?.state).filter(Boolean) || []
   )
 
   // Calculate completion percentage for each category
   const categoryStats = await Promise.all(
-    (typedCategories || []).map(async (category) => {
+    (categories || []).map(async (category) => {
       const { count: totalInCategory } = await supabase
         .from('locations')
         .select('*', { count: 'exact', head: true })
         .eq('category_id', category.id)
 
-      const checkedInCategory = typedCheckIns?.filter(
+      const checkedInCategory = checkIns?.filter(
         ci => ci.location?.category_id === category.id
       ).length || 0
 
@@ -78,16 +76,16 @@ export default async function ProfilePage() {
     <div>
       <div className="mb-8">
         <div className="flex items-center gap-4 mb-4">
-          {typedProfile?.avatar_url && (
+          {profile?.avatar_url && (
             <img
-              src={typedProfile.avatar_url}
-              alt={typedProfile.name || 'User'}
+              src={profile.avatar_url}
+              alt={profile.name || 'User'}
               className="w-20 h-20 rounded-full"
             />
           )}
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              {typedProfile?.name || 'Explorer'}
+              {profile?.name || 'Explorer'}
             </h1>
             <p className="text-gray-600">{user.email}</p>
           </div>
@@ -149,12 +147,10 @@ export default async function ProfilePage() {
         <h2 className="text-2xl font-bold text-gray-900 mb-4">
           All Check-ins ({totalCheckIns})
         </h2>
-        {typedCheckIns && typedCheckIns.length > 0 ? (
+        {checkIns && checkIns.length > 0 ? (
           <div className="space-y-4">
-            {typedCheckIns
-              .filter(checkIn => checkIn.location !== null)
-              .map(checkIn => (
-              <CheckInItem key={checkIn.id} checkIn={checkIn as any} />
+            {checkIns.map(checkIn => (
+              <CheckInItem key={checkIn.id} checkIn={checkIn} />
             ))}
           </div>
         ) : (

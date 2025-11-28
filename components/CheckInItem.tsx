@@ -1,16 +1,14 @@
-import { CheckIn, Location, Category } from '@/types'
+import { CheckInWithLocation } from '@/types'
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
 
 interface CheckInItemProps {
-  checkIn: CheckIn & {
-    location: Location & {
-      category?: Category
-    }
-  }
+  checkIn: CheckInWithLocation
 }
 
 export function CheckInItem({ checkIn }: CheckInItemProps) {
+  if (!checkIn.location) return null
+  
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow">
       <div className="flex items-start gap-4">

@@ -14,10 +14,11 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
   const { data: { user } } = await supabase.auth.getUser()
 
   // Fetch categories
-  const { data: categories } = await supabase
+  const categoriesQuery = await supabase
     .from('categories')
     .select('*')
     .order('name')
+  const categories = categoriesQuery.data as Category[] | null
 
   // Build query for locations
   let query = supabase
@@ -30,15 +31,15 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
     .order('name')
 
   if (params.category) {
-    const { data: category } = await supabase
+    const categoryQuery = await supabase
       .from('categories')
       .select('id')
       .eq('slug', params.category)
       .single()
+    const category = categoryQuery.data as { id: string } | null
     
-    const typedCategory = category as { id: string } | null
-    if (typedCategory) {
-      query = query.eq('category_id', typedCategory.id)
+    if (category) {
+      query = query.eq('category_id', category.id)
     }
   }
 
@@ -46,32 +47,29 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
     query = query.eq('state', params.state)
   }
 
-  const { data: locations } = await query
+  const locationsQuery = await query
+  const locations = locationsQuery.data as any[] | null
 
   // Get user's check-ins to mark locations
-  const { data: userCheckIns } = await supabase
+  const userCheckInsQuery = await supabase
     .from('check_ins')
     .select('location_id')
     .eq('user_id', user?.id || '')
+  const userCheckIns = userCheckInsQuery.data as { location_id: string }[] | null
 
-  // Cast to proper types
-  const typedCategories = categories as Category[] | null
-  const typedLocations = locations as any[] | null
-  const typedUserCheckIns = userCheckIns as { location_id: string }[] | null
-  
-  const checkedInLocationIds = new Set(typedUserCheckIns?.map(ci => ci.location_id) || [])
+  const checkedInLocationIds = new Set(userCheckIns?.map(ci => ci.location_id) || [])
 
   // Get unique states
-  const { data: statesData } = await supabase
+  const statesQuery = await supabase
     .from('locations')
     .select('state')
     .not('state', 'is', null)
     .order('state')
+  const statesData = statesQuery.data as { state: string }[] | null
 
-  const typedStatesData = statesData as { state: string }[] | null
-  const uniqueStates = [...new Set(typedStatesData?.map(l => l.state).filter(Boolean) || [])]
+  const uniqueStates = [...new Set(statesData?.map(l => l.state).filter(Boolean) || [])]
 
-  const locationsWithCheckIns = typedLocations?.map((location: any) => ({
+  const locationsWithCheckIns = locations?.map((location: any) => ({
     ...location,
     user_checked_in: checkedInLocationIds.has(location.id),
   }))
@@ -87,7 +85,7 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
 
       {/* Filters */}
       <ExploreFilters 
-        categories={typedCategories || []} 
+        categories={categories || []} 
         uniqueStates={uniqueStates} 
       />
 
