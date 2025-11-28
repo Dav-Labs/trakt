@@ -40,7 +40,7 @@ export default async function DashboardPage() {
 
   // Get unique categories checked in
   const uniqueCategoriesCheckedIn = new Set(
-    checkIns?.map(ci => ci.location?.category_id).filter(Boolean) || []
+    checkIns?.map((ci: any) => ci.location?.category_id).filter(Boolean) || []
   )
 
   return (
@@ -85,7 +85,7 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {categories?.map(category => {
             const categoryCheckIns = checkIns?.filter(
-              ci => ci.location?.category_id === category.id
+              (ci: any) => ci.location?.category_id === category.id
             ).length || 0
 
             return (

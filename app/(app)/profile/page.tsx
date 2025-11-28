@@ -39,12 +39,12 @@ export default async function ProfilePage() {
   // Calculate stats
   const totalCheckIns = checkIns?.length || 0
   const uniqueCategoriesCheckedIn = new Set(
-    checkIns?.map(ci => ci.location?.category_id).filter(Boolean) || []
+    checkIns?.map((ci: any) => ci.location?.category_id).filter(Boolean) || []
   )
   
   // Get states visited
   const statesVisited = new Set(
-    checkIns?.map(ci => ci.location?.state).filter(Boolean) || []
+    checkIns?.map((ci: any) => ci.location?.state).filter(Boolean) || []
   )
 
   // Calculate completion percentage for each category
@@ -56,7 +56,7 @@ export default async function ProfilePage() {
         .eq('category_id', category.id)
 
       const checkedInCategory = checkIns?.filter(
-        ci => ci.location?.category_id === category.id
+        (ci: any) => ci.location?.category_id === category.id
       ).length || 0
 
       return {
