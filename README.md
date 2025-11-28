@@ -1,36 +1,102 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TRAKT - Location Check-in App
 
-## Getting Started
+A motivational social media app for tracking and sharing location-based experiences.
 
-First, run the development server:
+## Setup Instructions
+
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Set Up Supabase
+
+1. Go to [https://supabase.com](https://supabase.com) and create a new project
+2. Wait for the database to be provisioned
+3. Go to Project Settings > API
+4. Copy your project URL and anon/public key
+
+### 3. Configure Environment Variables
+
+Create a `.env.local` file in the root directory:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+### 4. Set Up Database
+
+1. In your Supabase dashboard, go to the SQL Editor
+2. Copy the contents of `supabase-schema.sql`
+3. Paste and run it in the SQL Editor
+4. This will create all necessary tables, policies, and triggers
+
+### 5. Seed Initial Data
+
+After running the schema, you can seed initial location data:
+
+1. Go to SQL Editor in Supabase
+2. Run the seed SQL commands (we'll create this next)
+
+### 6. Run Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Tech Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Framework**: Next.js 14+ (App Router)
+- **Language**: TypeScript
+- **Styling**: TailwindCSS
+- **Database**: PostgreSQL (Supabase)
+- **Authentication**: Supabase Auth
+- **Storage**: Supabase Storage
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+trakt-app/
+├── app/                    # Next.js App Router
+│   ├── (auth)/            # Authentication pages
+│   │   ├── login/
+│   │   └── signup/
+│   ├── (app)/             # Main app pages (protected)
+│   │   ├── dashboard/
+│   │   ├── explore/
+│   │   ├── locations/
+│   │   └── profile/
+│   ├── layout.tsx
+│   └── page.tsx
+├── components/            # Reusable React components
+├── lib/                   # Utility functions
+│   └── supabase/         # Supabase client configuration
+├── types/                # TypeScript type definitions
+└── middleware.ts         # Next.js middleware for auth
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Features (Phase 1 MVP)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- ✅ User authentication (email/password)
+- ✅ Browse locations by category
+- ✅ Manual check-in system
+- ✅ User profile with stats
+- ✅ Location detail pages
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Deploy to Vercel with one click:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run build
+```
+
+Then connect your GitHub repository to Vercel and add your environment variables.
+
+## License
+
+MIT
