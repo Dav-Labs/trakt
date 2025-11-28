@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { StatsCard } from '@/components/StatsCard'
 import { CheckInItem } from '@/components/CheckInItem'
 import { EmptyState } from '@/components/EmptyState'
+import type { User, Category, CheckInWithLocation } from '@/types'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -36,27 +37,32 @@ export default async function ProfilePage() {
     .from('categories')
     .select('*')
 
+  // Cast to proper types
+  const typedProfile = profile as User | null
+  const typedCheckIns = checkIns as CheckInWithLocation[] | null
+  const typedCategories = categories as Category[] | null
+
   // Calculate stats
-  const totalCheckIns = checkIns?.length || 0
+  const totalCheckIns = typedCheckIns?.length || 0
   const uniqueCategoriesCheckedIn = new Set(
-    checkIns?.map((ci: any) => ci.location?.category_id).filter(Boolean) || []
+    typedCheckIns?.map(ci => ci.location?.category_id).filter(Boolean) || []
   )
   
   // Get states visited
   const statesVisited = new Set(
-    checkIns?.map((ci: any) => ci.location?.state).filter(Boolean) || []
+    typedCheckIns?.map(ci => ci.location?.state).filter(Boolean) || []
   )
 
   // Calculate completion percentage for each category
   const categoryStats = await Promise.all(
-    (categories || []).map(async (category) => {
+    (typedCategories || []).map(async (category) => {
       const { count: totalInCategory } = await supabase
         .from('locations')
         .select('*', { count: 'exact', head: true })
         .eq('category_id', category.id)
 
-      const checkedInCategory = checkIns?.filter(
-        (ci: any) => ci.location?.category_id === category.id
+      const checkedInCategory = typedCheckIns?.filter(
+        ci => ci.location?.category_id === category.id
       ).length || 0
 
       return {
@@ -72,16 +78,16 @@ export default async function ProfilePage() {
     <div>
       <div className="mb-8">
         <div className="flex items-center gap-4 mb-4">
-          {profile?.avatar_url && (
+          {typedProfile?.avatar_url && (
             <img
-              src={profile.avatar_url}
-              alt={profile.name || 'User'}
+              src={typedProfile.avatar_url}
+              alt={typedProfile.name || 'User'}
               className="w-20 h-20 rounded-full"
             />
           )}
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              {profile?.name || 'Explorer'}
+              {typedProfile?.name || 'Explorer'}
             </h1>
             <p className="text-gray-600">{user.email}</p>
           </div>
@@ -143,10 +149,12 @@ export default async function ProfilePage() {
         <h2 className="text-2xl font-bold text-gray-900 mb-4">
           All Check-ins ({totalCheckIns})
         </h2>
-        {checkIns && checkIns.length > 0 ? (
+        {typedCheckIns && typedCheckIns.length > 0 ? (
           <div className="space-y-4">
-            {checkIns.map(checkIn => (
-              <CheckInItem key={checkIn.id} checkIn={checkIn} />
+            {typedCheckIns
+              .filter(checkIn => checkIn.location !== null)
+              .map(checkIn => (
+              <CheckInItem key={checkIn.id} checkIn={checkIn as any} />
             ))}
           </div>
         ) : (

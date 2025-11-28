@@ -3,9 +3,16 @@ import { notFound } from 'next/navigation'
 import { CheckInButton } from '@/components/CheckInButton'
 import { CheckInItem } from '@/components/CheckInItem'
 import Link from 'next/link'
+import type { LocationWithCategory, CheckInWithLocation } from '@/types'
 
 interface LocationPageProps {
   params: Promise<{ id: string }>
+}
+
+interface UserCheckIn {
+  id: string
+  notes: string | null
+  checked_at: string
 }
 
 export default async function LocationPage({ params }: LocationPageProps) {
@@ -27,10 +34,13 @@ export default async function LocationPage({ params }: LocationPageProps) {
     notFound()
   }
 
+  // Cast to proper type
+  const typedLocation = location as LocationWithCategory
+
   // Get check-in count
   const { count: checkInCount } = await supabase
     .from('check_ins')
-    .select('*', { count: 'only', head: true })
+    .select('*', { count: 'exact', head: true })
     .eq('location_id', id)
 
   // Check if user has checked in
@@ -40,6 +50,8 @@ export default async function LocationPage({ params }: LocationPageProps) {
     .eq('location_id', id)
     .eq('user_id', user.id)
     .single() : { data: null }
+
+  const typedUserCheckIn = userCheckIn as UserCheckIn | null
 
   // Get recent check-ins from other users
   const { data: recentCheckIns } = await supabase
@@ -55,6 +67,8 @@ export default async function LocationPage({ params }: LocationPageProps) {
     .order('checked_at', { ascending: false })
     .limit(5)
 
+  const typedRecentCheckIns = recentCheckIns as CheckInWithLocation[] | null
+
   return (
     <div>
       <Link
@@ -67,11 +81,11 @@ export default async function LocationPage({ params }: LocationPageProps) {
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2">
-          {location.image_url && (
+          {typedLocation.image_url && (
             <div className="rounded-lg overflow-hidden mb-6">
               <img
-                src={location.image_url}
-                alt={location.name}
+                src={typedLocation.image_url}
+                alt={typedLocation.name}
                 className="w-full h-96 object-cover"
               />
             </div>
@@ -81,58 +95,60 @@ export default async function LocationPage({ params }: LocationPageProps) {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                  {location.name}
+                  {typedLocation.name}
                 </h1>
-                {location.state && (
-                  <p className="text-xl text-gray-600">{location.state}</p>
+                {typedLocation.state && (
+                  <p className="text-xl text-gray-600">{typedLocation.state}</p>
                 )}
               </div>
-              {userCheckIn && (
+              {typedUserCheckIn && (
                 <span className="text-green-600 text-3xl">✓</span>
               )}
             </div>
 
-            {location.category && (
+            {typedLocation.category && (
               <div className="flex items-center gap-2 text-gray-600 mb-4">
-                <span className="text-2xl">{location.category.icon}</span>
-                <span className="font-medium">{location.category.name}</span>
+                <span className="text-2xl">{typedLocation.category.icon}</span>
+                <span className="font-medium">{typedLocation.category.name}</span>
               </div>
             )}
 
-            {location.description && (
+            {typedLocation.description && (
               <p className="text-gray-700 text-lg leading-relaxed mb-6">
-                {location.description}
+                {typedLocation.description}
               </p>
             )}
 
-            {location.latitude && location.longitude && (
+            {typedLocation.latitude && typedLocation.longitude && (
               <div className="text-sm text-gray-600">
                 <span className="font-medium">Coordinates:</span>{' '}
-                {location.latitude}, {location.longitude}
+                {typedLocation.latitude}, {typedLocation.longitude}
               </div>
             )}
           </div>
 
           {/* User's check-in notes */}
-          {userCheckIn && userCheckIn.notes && (
+          {typedUserCheckIn && typedUserCheckIn.notes && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
               <h3 className="font-semibold text-gray-900 mb-2">Your Notes</h3>
-              <p className="text-gray-700">{userCheckIn.notes}</p>
+              <p className="text-gray-700">{typedUserCheckIn.notes}</p>
               <p className="text-xs text-gray-500 mt-2">
-                Checked in on {new Date(userCheckIn.checked_at).toLocaleDateString()}
+                Checked in on {new Date(typedUserCheckIn.checked_at).toLocaleDateString()}
               </p>
             </div>
           )}
 
           {/* Recent Check-ins */}
-          {recentCheckIns && recentCheckIns.length > 0 && (
+          {typedRecentCheckIns && typedRecentCheckIns.length > 0 && (
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">
                 Recent Check-ins ({checkInCount || 0})
               </h2>
               <div className="space-y-4">
-                {recentCheckIns.map(checkIn => (
-                  <CheckInItem key={checkIn.id} checkIn={checkIn} />
+                {typedRecentCheckIns
+                  .filter(checkIn => checkIn.location !== null)
+                  .map(checkIn => (
+                  <CheckInItem key={checkIn.id} checkIn={checkIn as any} />
                 ))}
               </div>
             </div>
@@ -156,13 +172,13 @@ export default async function LocationPage({ params }: LocationPageProps) {
             </div>
 
             <CheckInButton
-              locationId={location.id}
-              isCheckedIn={!!userCheckIn}
-              checkInId={userCheckIn?.id}
+              locationId={typedLocation.id}
+              isCheckedIn={!!typedUserCheckIn}
+              checkInId={typedUserCheckIn?.id}
             />
 
             <p className="text-xs text-gray-500 mt-4 text-center">
-              {userCheckIn
+              {typedUserCheckIn
                 ? 'Click to remove your check-in'
                 : 'Share your experience with the community'}
             </p>

@@ -13,13 +13,19 @@ export type CheckIn = Tables<'check_ins'>
 
 // Extended types with relations
 export type LocationWithCategory = Location & {
-  category: Category
+  category: Category | null
   check_in_count?: number
   user_checked_in?: boolean
+  check_ins?: CheckIn[]
 }
 
 export type CheckInWithLocation = CheckIn & {
-  location: LocationWithCategory
+  location: LocationWithCategory | null
+}
+
+export type LocationWithCategoryAndCheckIns = Location & {
+  category: Category
+  check_ins: { user_id: string }[]
 }
 
 export type UserWithStats = User & {

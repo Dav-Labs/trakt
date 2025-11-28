@@ -36,7 +36,7 @@ export function CheckInButton({ locationId, isCheckedIn, checkInId }: CheckInBut
           user_id: user.id,
           location_id: locationId,
           notes: notes || null,
-        })
+        } as any)
 
       if (insertError) {
         setError(insertError.message)

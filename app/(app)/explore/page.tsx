@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { LocationCard } from '@/components/LocationCard'
 import { EmptyState } from '@/components/EmptyState'
 import { ExploreFilters } from '@/components/ExploreFilters'
+import type { Category, LocationWithCategoryAndCheckIns, LocationWithCategory } from '@/types'
 
 interface ExplorePageProps {
   searchParams: Promise<{ category?: string; state?: string }>
@@ -35,8 +36,9 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
       .eq('slug', params.category)
       .single()
     
-    if (category) {
-      query = query.eq('category_id', category.id)
+    const typedCategory = category as { id: string } | null
+    if (typedCategory) {
+      query = query.eq('category_id', typedCategory.id)
     }
   }
 
@@ -52,7 +54,12 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
     .select('location_id')
     .eq('user_id', user?.id || '')
 
-  const checkedInLocationIds = new Set(userCheckIns?.map(ci => ci.location_id) || [])
+  // Cast to proper types
+  const typedCategories = categories as Category[] | null
+  const typedLocations = locations as any[] | null
+  const typedUserCheckIns = userCheckIns as { location_id: string }[] | null
+  
+  const checkedInLocationIds = new Set(typedUserCheckIns?.map(ci => ci.location_id) || [])
 
   // Get unique states
   const { data: statesData } = await supabase
@@ -61,11 +68,11 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
     .not('state', 'is', null)
     .order('state')
 
-  const uniqueStates = [...new Set(statesData?.map(l => l.state).filter(Boolean) || [])]
+  const typedStatesData = statesData as { state: string }[] | null
+  const uniqueStates = [...new Set(typedStatesData?.map(l => l.state).filter(Boolean) || [])]
 
-  const locationsWithCheckIns = locations?.map(location => ({
+  const locationsWithCheckIns = typedLocations?.map((location: any) => ({
     ...location,
-    check_in_count: location.check_ins?.[0]?.count || 0,
     user_checked_in: checkedInLocationIds.has(location.id),
   }))
 
@@ -80,14 +87,14 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
 
       {/* Filters */}
       <ExploreFilters 
-        categories={categories || []} 
+        categories={typedCategories || []} 
         uniqueStates={uniqueStates} 
       />
 
       {/* Locations Grid */}
       {locationsWithCheckIns && locationsWithCheckIns.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {locationsWithCheckIns.map(location => (
+          {locationsWithCheckIns.map((location: any) => (
             <LocationCard key={location.id} location={location} />
           ))}
         </div>

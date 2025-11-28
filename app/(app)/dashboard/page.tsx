@@ -4,6 +4,7 @@ import { CategoryCard } from '@/components/CategoryCard'
 import { CheckInItem } from '@/components/CheckInItem'
 import { EmptyState } from '@/components/EmptyState'
 import Link from 'next/link'
+import type { Category, CheckInWithLocation } from '@/types'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -38,9 +39,13 @@ export default async function DashboardPage() {
     .from('locations')
     .select('*', { count: 'exact', head: true })
 
+  // Cast to proper types
+  const typedCheckIns = checkIns as CheckInWithLocation[] | null
+  const typedCategories = categories as Category[] | null
+
   // Get unique categories checked in
   const uniqueCategoriesCheckedIn = new Set(
-    checkIns?.map((ci: any) => ci.location?.category_id).filter(Boolean) || []
+    typedCheckIns?.map(ci => ci.location?.category_id).filter(Boolean) || []
   )
 
   return (
@@ -57,7 +62,7 @@ export default async function DashboardPage() {
         <StatsCard
           icon="✅"
           label="Total Check-ins"
-          value={checkIns?.length || 0}
+          value={typedCheckIns?.length || 0}
         />
         <StatsCard
           icon="🏆"
@@ -83,9 +88,9 @@ export default async function DashboardPage() {
           </Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {categories?.map((category: any) => {
-            const categoryCheckIns = checkIns?.filter(
-              (ci: any) => ci.location?.category_id === category.id
+          {typedCategories?.map(category => {
+            const categoryCheckIns = typedCheckIns?.filter(
+              ci => ci.location?.category_id === category.id
             ).length || 0
 
             return (
@@ -102,10 +107,12 @@ export default async function DashboardPage() {
       {/* Recent Check-ins */}
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Recent Check-ins</h2>
-        {checkIns && checkIns.length > 0 ? (
+        {typedCheckIns && typedCheckIns.length > 0 ? (
           <div className="space-y-4">
-            {checkIns.map(checkIn => (
-              <CheckInItem key={checkIn.id} checkIn={checkIn} />
+            {typedCheckIns
+              .filter(checkIn => checkIn.location !== null)
+              .map(checkIn => (
+              <CheckInItem key={checkIn.id} checkIn={checkIn as any} />
             ))}
           </div>
         ) : (
